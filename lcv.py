@@ -18,7 +18,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
-
+from compute_energy import *
 from utils import *
 
 
@@ -90,8 +90,12 @@ def localtwophase(f, lamba, beta, dt):
         if np.linalg.norm(u-u_old,'fro') < 1e-5:
             break
     
+    # compute energy
+    energy = grayscale_two_phase_cv_energy(f, diff, u, lamba, beta)
+
     # print number of iterations to complete convergence
-    print(f'Number of iterations completed: {i} \n \n')
+    print(f'Number of iterations completed: {i} \n')
+    print(f'Energy: {energy} \n \n')
 
     # unpadding
     u = u[pad:-pad,pad:-pad]
@@ -153,6 +157,10 @@ def localtwophase_color(f, lamba, beta, dt):
     diff2 = filtf2 - f2
     diff3 = filtf3 - f3
 
+    # concatenate
+    color_f = np.stack([f1,f2,f3],axis = 0)
+    color_diff = np.stack([diff1, diff2, diff3], axis=0)
+
 
     # perform two-phase image segmentation
     for i in range(0,200):
@@ -191,8 +199,14 @@ def localtwophase_color(f, lamba, beta, dt):
         if np.linalg.norm(u-u_old,'fro') < 1e-5:
             break
     
+
+
     # print number of iterations to complete convergence
-    print(f'Number of iterations completed: {i+1} \n \n')
+    print(f'Number of iterations completed: {i+1} \n')
+
+        # compute energy
+    energy = color_two_phase_cv_energy(color_f, color_diff, u, lamba, beta)
+    print(f'Energy: {energy} \n\n')
 
     # unpadding
     u = u[pad:-pad,pad:-pad]
@@ -287,7 +301,11 @@ def localfourphase(f, lamba, beta, dt):
         if np.linalg.norm(np.concatenate((u1,u2))-np.concatenate((u1_old,u2_old)),'fro') < 1e-5:
             break
     # print number of iterations to complete convergence
-    print(f'Number of iterations completed: {(i+1)} \n \n')
+    print(f'Number of iterations completed: {(i+1)} \n')
+
+    # compute energy
+    energy = grayscale_four_phase_cv_energy(f,diff, u1, u2, lamba, beta)
+    print(f'Energy: {energy} \n\n')
 
     # unpadding
     u1 = u1[pad:-pad,pad:-pad]
@@ -359,6 +377,10 @@ def localfourphase_color(f, lamba, beta, dt):
     diff2 = filtf2 - f2
     diff3 = filtf3 - f3
 
+    # concatenate
+    color_f = np.stack([f1,f2,f3],axis = 0)
+    color_diff = np.stack([diff1, diff2, diff3], axis=0)
+
 
     # perform four-phase image segmentation
     for i in range(0,200):
@@ -429,7 +451,11 @@ def localfourphase_color(f, lamba, beta, dt):
         if np.linalg.norm(np.concatenate((u1,u2))-np.concatenate((u1_old,u2_old)),'fro') < 1e-5:
             break
     # print number of iterations to complete convergence
-    print(f'Number of iterations completed: {(i+1)} \n \n')
+    print(f'Number of iterations completed: {(i+1)} \n ')
+
+    energy = color_four_phase_cv_energy(color_f,color_diff, u1, u2, lamba, beta)
+    print(f'Energy: {energy} \n\n')
+
 
     # unpadding
     u1 = u1[pad:-pad,pad:-pad]
@@ -441,4 +467,3 @@ def localfourphase_color(f, lamba, beta, dt):
     u=u1+u2
 
     return(u)
-
