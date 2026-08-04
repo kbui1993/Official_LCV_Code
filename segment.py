@@ -19,6 +19,8 @@ from PIL import Image
 
 from lcv import *
 from utils import *
+from skimage import segmentation
+from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', default='./images/grayscale_two_phase/vessel2.png', type=str, metavar='PATH',
@@ -47,11 +49,24 @@ def main():
 
         if args.phase == 'two':
             u = localtwophase_color(f, args.lamba, args.beta, args.dt)
+            segmentation_result = segmentation.mark_boundaries(orig_f, u.astype(int))
+            segmentation_result = Image.fromarray(np.uint8(segmentation_result*255))
+            
+            output_stem = Path(args.save).with_suffix("")
+            segmentation_result.save(str(output_stem)+'_segmented.png')
+
+
         elif args.phase == 'four':
             u = localfourphase_color(f, args.lamba, args.beta, args.dt)
+            for i in range(0,4):
+                segmentation_result = segmentation.mark_boundaries(orig_f, (u==i).astype(int))
+                segmentation_result = Image.fromarray(np.uint8(segmentation_result*255))
+                output_stem = Path(args.save).with_suffix("")
+                segmentation_result.save(str(output_stem)+'_segmented'+str(i)+'.png')
 
         approx = reconstruct_color_image(orig_f, u)
         output = Image.fromarray(np.uint8(approx))
+
         output.save(args.save)
     elif len(orig_f.shape) == 2:
         
@@ -59,9 +74,18 @@ def main():
 
         if args.phase == 'two':
             u = localtwophase(f, args.lamba, args.beta, args.dt)
+            segmentation_result = segmentation.mark_boundaries(f, u.astype(int))
+            segmentation_result = Image.fromarray(np.uint8(segmentation_result*255))
+            output_stem = Path(args.save).with_suffix("")
+            segmentation_result.save(str(output_stem)+'_segmented.png')
         elif args.phase == 'four':
             u = localfourphase(f, args.lamba, args.beta, args.dt)
-    
+            for i in range(0,4):
+                segmentation_result = segmentation.mark_boundaries(f, (u==i).astype(int))
+                segmentation_result = Image.fromarray(np.uint8(segmentation_result*255))
+                output_stem = Path(args.save).with_suffix("")
+                segmentation_result.save(str(output_stem)+'_segmented'+str(i)+'.png')
+
         approx = reconstruct_grayscale_image(orig_f, u)
         
         output = Image.fromarray(np.uint8(approx))
